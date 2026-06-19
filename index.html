@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tinédzserek Mentális Egészsége - Adatvizualizáció</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega/5.25.0/vega.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-lite/5.18.0/vega-lite.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-embed/6.22.0/vega-embed.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f9fafb;
+            color: #1f2937;
+        }
+
+        .header {
+            background: linear-gradient(to right, #7c3aed, #9333ea, #4f46e5);
+            color: white;
+            padding: 5rem 1rem;
+        }
+
+        .header-container {
+            max-width: 72rem;
+            margin: 0 auto;
+        }
+
+        .header-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            padding: 0.25rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 36rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        .filter-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .filter-box label {
+            display: block;
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-box select {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 0;
+            border-radius: 0.25rem;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+        }
+
+        /* EZT A RÉSZT ADTUK HOZZÁ A LÁTHATÓSÁGÉRT */
+        .filter-box select option {
+            color: #1f2937; 
+            background: white; 
+        }
+
+        .stats-container {
+            max-width: 72rem;
+            margin: 0 auto;
+            padding: 0 1rem;
+            margin-top: -3rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            padding: 1.25rem;
+            text-align: center;
+            transition: box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #7c3aed;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .section {
+            max-width: 72rem;
+            margin: 0 auto;
+            padding: 3rem 1rem;
+        }
+
+        .intro-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .intro-card h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+
+        .intro-card p {
+            color: #4b5563;
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+
+        .intro-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .tag-violet {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .tag-indigo {
+            background: #e0e7ff;
+            color: #4f46e5;
+        }
+
+        .tag-purple {
+            background: #f3e8ff;
+            color: #9333ea;
+        }
+
+        .tag-blue {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .charts-section {
+            max-width: 72rem;
+            margin: 0 auto;
+            padding: 0 1rem 2rem;
+        }
+
+        .charts-section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .charts-section>p {
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-0.25rem);
+        }
+
+        .chart-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: #1f2937;
+        }
+
+        .chart-card p {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-div {
+            height: 18rem;
+            width: 100%; /* Ezt a sort adtuk hozzá, hogy legyen szélessége */
+        }
+
+        .insights-section {
+            max-width: 72rem;
+            margin: 0 auto;
+            padding: 0 1rem 4rem;
+        }
+
+        .insights-card {
+            background: linear-gradient(to bottom right, #f5f3ff, #eef2ff);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .insights-card h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .insights-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .insight-item {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1.25rem;
+        }
+
+        .insight-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-item h4 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .insight-item p {
+            color: #4b5563;
+            font-size: 0.875rem;
+        }
+
+        .main-insight {
+            margin-top: 1.5rem;
+            background: #7c3aed;
+            color: white;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+        }
+
+        .main-insight h4 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .main-insight p {
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        .footer {
+            background: #111827;
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        .footer p {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="header-badge">Adatvezérelt betekintés</div>
+            <h1>Tinédzserek Mentális Egészsége</h1>
+            <p>A digitális kor hatása a tinédzserek jóllétére - Interaktív adatvizualizáció</p>
+            <div class="filters">
+                <div class="filter-box">
+                    <label>Nem</label>
+                    <select id="genderFilter" onchange="applyFilters()">
+                        <option value="all">Mindkettő</option>
+                        <option value="male">Fiú</option>
+                        <option value="female">Lány</option>
+                    </select>
+                </div>
+                <div class="filter-box">
+                    <label>Korcsoport</label>
+                    <select id="ageFilter" onchange="applyFilters()">
+                        <option value="all">Minden kor</option>
+                        <option value="13-14">13-14 év</option>
+                        <option value="15-16">15-16 év</option>
+                        <option value="17-19">17-19 év</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="stats-container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalCount">-</div>
+                <div class="stat-label">Összes kitöltő</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgSleep">-</div>
+                <div class="stat-label">Átlagos alvás (óra)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgStress">-</div>
+                <div class="stat-label">Átlagos stressz</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgAnxiety">-</div>
+                <div class="stat-label">Átlagos szorongás</div>
+            </div>
+        </div>
+    </section>
+    <section class="section">
+        <div class="intro-card">
+            <h2>Miért fontos ez a téma?</h2>
+            <p>A tinédzserkor az egyik legkritikusabb időszak a mentális fejlődésben. A modern digitális környezet
+                jelentős hatással van a fiatalok pszichológiai jóllétére. A közösségi média, az alvásminőség és az
+                akadémiai teljesítmény mind összefüggenek egymással.</p>
+            <p>Ez az adatbázis <strong>1200 tinédzser</strong> (13-19 év) válaszait tartalmazza. A felmérés vizsgálja a
+                közösségi média használatát, az alvási szokásokat, az akadémiai teljesítményt, valamint a stressz,
+                szorongás és addictív viselkedés szintjét.</p>
+            <div>
+                <span class="tag tag-violet">Közösségi média</span>
+                <span class="tag tag-indigo">Alvás</span>
+                <span class="tag tag-purple">Stressz & Szorongás</span>
+                <span class="tag tag-blue">Fizikai aktivitás</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="charts-section">
+        <h2>Adatvizualizációk</h2>
+        <p>Interaktív grafikonok</p>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Mentális állapotok eloszlása</h3>
+                <p>Stressz, szorongás és addikció szintek összehasonlítása (1-10 skála)</p>
+                <div id="mentalStateChart" class="chart-div"></div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Társasinterakció szintje</h3>
+                <p>A tinédzserek társas kapcsolatainak intenzitása</p>
+                <div id="socialChart" class="chart-div"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="charts-section">
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Alvás vs. Stressz</h3>
+                <p>Az alvás mennyisége és a stressz kapcsolata</p>
+                <div id="scatterSleepStress" class="chart-div"></div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Kor szerinti trendek</h3>
+                <p>Mentális állapotok alakulása életkor szerint</p>
+                <div id="lineAgeChart" class="chart-div"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="charts-section">
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Közösségi média használat</h3>
+                <p>Napi közösségi média használat eloszlása órákban</p>
+                <div id="histogramSocial" class="chart-div"></div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Platform preferencia</h3>
+                <p>Leggyakrabban használt közösségi média platformok</p>
+                <div id="platformChart" class="chart-div"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="charts-section">
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Közösségi média vs. Szorongás</h3>
+                <p>A közösségi média használat és a szorongás kapcsolata</p>
+                <div id="scatterSocialAnxiety" class="chart-div"></div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Akadémiai teljesítmény</h3>
+                <p>Iskolai teljesítmény eloszlása (0-4.0 GPA skála)</p>
+                <div id="histogramAcademic" class="chart-div"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="insights-section">
+        <div class="insights-card">
+            <h2>Kulcs meglátások és következtetések</h2>
+
+            <div class="insights-grid">
+                <div class="insight-item">
+                    <div class="insight-icon">💤</div>
+                    <h4>Alvás kritikus</h4>
+                    <p>A kevesebb alvás magasabb stresszel és szorongással korrelál. A tinédzsereknek legalább 8 óra
+                        alvásra lenne szükségük.</p>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-icon">📱</div>
+                    <h4>Mérsékelt médiahasználat</h4>
+                    <p>A napi 4+ óra közösségi média használat szignifikánsan magasabb szorongásszintekkel jár együtt.
+                    </p>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-icon">🏃</div>
+                    <h4>Fizikai aktivitás véd</h4>
+                    <p>A rendszeres fizikai aktivitás védő faktor a mentális problémák ellen.</p>
+                </div>
+            </div>
+
+            <div class="main-insight">
+                <h4>Fő tanulság</h4>
+                <p>A digitális technológia nem eleve káros - a kulcs a mértékletesség. A tinédzserek mentális egészsége
+                    szempontjából kritikus a megfelelő alvás, a korlátozott képernyőidő és a rendszeres fizikai
+                    aktivitás kombinációja.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>Teen Mental Health Dataset - Interaktív Adatvizualizáció | Készült Vega-Lite használatával</p>
+    </footer>
+
+    <script>
+        // Globális változók az adatok tárolására
+        let globalData = [];
+        let filteredData = [];
+
+        // 1. Az adatok beolvasása a helyi szerverről (a teljes dataset.csv)
+        fetch('dataset.csv')
+            .then(response => response.text())
+            .then(csvText => {
+                const lines = csvText.trim().split('\n');
+                const headers = lines[0].split(',');
+
+                globalData = lines.slice(1).map(line => {
+                    const values = line.split(',');
+                    const obj = {};
+                    headers.forEach((h, i) => {
+                        obj[h] = isNaN(values[i]) ? values[i] : parseFloat(values[i]);
+                    });
+                    return obj;
+                });
+
+                console.log("Sikeres beolvasás! Betöltött sorok száma: ", globalData.length);
+
+                // Ha sikeres a beolvasás, átadjuk az adatokat és indítjuk a grafikonokat
+                if (globalData.length > 0) {
+                    filteredData = globalData;
+                    initCharts();
+                }
+            })
+            .catch(error => console.error('Hiba az adatok beolvasásakor:', error));
+
+        // 2. Grafikonok inicializálása (megvárja, amíg a Vega könyvtár betölt)
+        function initCharts() {
+            if (typeof vegaEmbed === 'undefined') {
+                console.log('Még várakozik Vega-ra...');
+                setTimeout(initCharts, 500);
+                return;
+            }
+
+            // Itt hívjuk meg a kártyák és grafikonok frissítését
+            updateStats();
+            renderCharts();
+            console.log('Grafikonok inicializálása kész!');
+        }
+
+        // 3. A legördülő szűrők logikája (ezt a szaktársad zseniálisan írta meg)
+        function applyFilters() {
+            const gender = document.getElementById('genderFilter').value;
+            const ageGroup = document.getElementById('ageFilter').value;
+
+            filteredData = globalData.filter(d => {
+                let ok = true;
+                if (gender !== 'all') ok = ok && d.gender === gender;
+                if (ageGroup !== 'all') {
+                    if (ageGroup === '13-14') ok = ok && d.age >= 13 && d.age <= 14;
+                    else if (ageGroup === '15-16') ok = ok && d.age >= 15 && d.age <= 16;
+                    else if (ageGroup === '17-19') ok = ok && d.age >= 17 && d.age <= 19;
+                }
+                return ok;
+            });
+
+            // Szűrés után újra kell rajzolni mindent az új adatokkal
+            updateStats();
+            renderCharts();
+        }
+        function updateStats() {
+            const count = filteredData.length;
+            document.getElementById('totalCount').textContent = count;
+
+            // Védelem: ha a szűrők miatt nincs adat, ne osszunk nullával!
+            if (count === 0) {
+                document.getElementById('avgSleep').textContent = "-";
+                document.getElementById('avgStress').textContent = "-";
+                document.getElementById('avgAnxiety').textContent = "-";
+                return; // Kilépünk a függvényből
+            }
+
+            const avgSleep = (filteredData.reduce((sum, d) => sum + Number(d.sleep_hours || 0), 0) / count).toFixed(1);
+            document.getElementById('avgSleep').textContent = avgSleep;
+
+            const avgStress = (filteredData.reduce((sum, d) => sum + Number(d.stress_level || 0), 0) / count).toFixed(1);
+            document.getElementById('avgStress').textContent = avgStress;
+
+            const avgAnxiety = (filteredData.reduce((sum, d) => sum + Number(d.anxiety_level || 0), 0) / count).toFixed(1);
+            document.getElementById('avgAnxiety').textContent = avgAnxiety;
+        }
+
+        function renderCharts() {
+            console.log('Renderelés indul, filteredData hossz:', filteredData.length);
+
+            try { renderMentalStateChart(); console.log('Mental state OK'); } catch (e) { console.error('Mental chart hiba:', e); }
+            try { renderSocialChart(); console.log('Social chart OK'); } catch (e) { console.error('Social chart hiba:', e); }
+            try { renderScatterSleepStress(); console.log('Scatter OK'); } catch (e) { console.error('Scatter hiba:', e); }
+            try { renderLineAgeChart(); console.log('Line OK'); } catch (e) { console.error('Line hiba:', e); }
+            try { renderHistogramSocial(); console.log('Hist social OK'); } catch (e) { console.error('Hist social hiba:', e); }
+            try { renderPlatformChart(); console.log('Platform OK'); } catch (e) { console.error('Platform hiba:', e); }
+            try { renderScatterSocialAnxiety(); console.log('Scatter anxiety OK'); } catch (e) { console.error('Scatter anxiety hiba:', e); }
+            try { renderHistogramAcademic(); console.log('Hist academic OK'); } catch (e) { console.error('Hist academic hiba:', e); }
+
+            console.log('Renderelés kész!');
+        }
+
+        function renderMentalStateChart() {
+            const data = [];
+            filteredData.forEach(d => {
+                data.push({ category: 'Stressz', value: Number(d.stress_level) || 0 });
+                data.push({ category: 'Szorongás', value: Number(d.anxiety_level) || 0 });
+                data.push({ category: 'Addikció', value: Number(d.addiction_level) || 0 });
+            });
+            
+            const avgData = {};
+            data.forEach(d => {
+                if (!avgData[d.category]) avgData[d.category] = [];
+                avgData[d.category].push(d.value);
+            });
+            
+            const chartData = Object.entries(avgData).map(([cat, vals]) => ({
+                category: cat,
+                value: vals.reduce((a,b) => a+b, 0) / vals.length
+            }));
+            
+            vegaEmbed('#mentalStateChart', {
+                "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                "data": { "values": chartData },
+                "encoding": {
+                    "x": { "field": "category", "type": "nominal", "title": null, "axis": { "labelAngle": 0, "labelFontSize": 13, "labelPadding": 10 } }
+                },
+                "layer": [
+                    {
+                        // 1. Réteg: Maguk az oszlopok, egyedi színekkel
+                        "mark": { "type": "bar", "cornerRadiusEnd": 4 },
+                        "encoding": {
+                            "y": { "field": "value", "type": "quantitative", "title": "Átlagos szint (1-10)", "scale": {"domain": [0, 10]} },
+                            "color": { 
+                                "field": "category", 
+                                "type": "nominal", 
+                                "legend": null, 
+                                "scale": { "range": ["#8b5cf6", "#ec4899", "#06b6d4"] } 
+                            },
+                            "tooltip": [{ "field": "category", "title": "Állapot" }, { "field": "value", "title": "Átlag", "format": ".2f" }]
+                        }
+                    },
+                    {
+                        // 2. Réteg: A pontos számértékek az oszlopok tetején
+                        "mark": { "type": "text", "align": "center", "baseline": "bottom", "dy": -5, "fontSize": 14, "fontWeight": "bold", "color": "#1f2937" },
+                        "encoding": {
+                            "y": { "field": "value", "type": "quantitative" },
+                            "text": { "field": "value", "type": "quantitative", "format": ".1f" }
+                        }
+                    }
+                ],
+                "width": "container",
+                "height": 250
+            }, { actions: false });
+        }
+
+        function renderSocialChart() {
+            const counts = { low: 0, medium: 0, high: 0 };
+            filteredData.forEach(d => {
+                const s = d.social_interaction_level;
+                if (s === 'low') counts.low++;
+                else if (s === 'medium') counts.medium++;
+                else if (s === 'high') counts.high++;
+            });
+            
+            const data = [
+                { level: 'Alacsony', count: counts.low, order: 1 },
+                { level: 'Közepes', count: counts.medium, order: 2 },
+                { level: 'Magas', count: counts.high, order: 3 }
+            ];
+            
+            vegaEmbed('#socialChart', {
+                "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                "data": { "values": data },
+                "encoding": {
+                    "theta": { "field": "count", "type": "quantitative", "stack": true },
+                    "order": { "field": "order", "type": "ordinal" },
+                    "color": { 
+                        "field": "level", 
+                        "type": "nominal", 
+                        "title": null, 
+                        "scale": { 
+                            "domain": ["Alacsony", "Közepes", "Magas"], 
+                            "range": ["#06b6d4", "#8b5cf6", "#ec4899"] 
+                        },
+                        "legend": { "orient": "right", "labelFontSize": 13 }
+                    },
+                    // Itt a javított, egyszerűsített tooltip, ami már Fő-t ír:
+                    "tooltip": [
+                        { "field": "level", "title": "Interakció" }, 
+                        { "field": "count", "title": "Fő" }
+                    ]
+                },
+                "layer": [
+                    {
+                        "mark": { "type": "arc", "innerRadius": 65, "outerRadius": 105 }
+                    },
+                    {
+                        "mark": { "type": "text", "radius": 85, "fontSize": 15, "fontWeight": "bold", "fill": "white" },
+                        "encoding": {
+                            "text": { "field": "count", "type": "quantitative" }
+                        }
+                    }
+                ],
+                "width": "container",
+                "height": 250
+            }, { actions: false });
+        }
+
+        function renderScatterSleepStress() {
+            // Kerekítés nélkül, a nyers tizedestörtes értékeket használjuk
+            const data = filteredData.map(d => ({
+                sleep_exact: Number(d.sleep_hours) || 0,
+                stress: Number(d.stress_level) || 0
+            })).filter(d => d.sleep_exact >= 4 && d.sleep_exact <= 10); 
+            
+            vegaEmbed('#scatterSleepStress', {
+                "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                "data": { "values": data },
+                "mark": { 
+                    "type": "line", 
+                    "point": { "size": 30, "color": "#ec4899" }, // Kisebb pöttyök, mert nagyon sok lesz belőlük
+                    "strokeWidth": 2, 
+                    "color": "#ec4899" 
+                },
+                "encoding": {
+                    "x": { 
+                        "field": "sleep_exact", 
+                        "type": "quantitative", 
+                        "title": "Alvás (pontos óra)" 
+                    },
+                    "y": { 
+                        "aggregate": "mean", 
+                        "field": "stress", 
+                        "type": "quantitative", 
+                        "title": "Átlagos stressz (1-10)", 
+                        "scale": { "domain": [0, 10] } 
+                    },
+                    "tooltip": [
+                        { "field": "sleep_exact", "title": "Alvás (óra)", "format": ".1f" },
+                        { "aggregate": "mean", "field": "stress", "title": "Átlagos stressz", "format": ".1f" },
+                        { "aggregate": "count", "field": "stress", "title": "Adatpontok (Fő)" }
+                    ]
+                },
+                "width": "container",
+                "height": 250
+            }, { actions: false });
+        }
+
+        function renderLineAgeChart() {
+            const grouped = {};
+            filteredData.forEach(d => {
+                const age = d.age;
+                if (!grouped[age]) grouped[age] = { stress: 0, anxiety: 0, addic: 0, count: 0 };
+                grouped[age].stress += Number(d.stress_level) || 0;
+                grouped[age].anxiety += Number(d.anxiety_level) || 0;
+                grouped[age].addic += Number(d.addiction_level) || 0;
+                grouped[age].count++;
+            });
+            
+            const data = [];
+            Object.entries(grouped).forEach(([age, vals]) => {
+                data.push({ age: Number(age), metric: 'Stressz', value: vals.stress / vals.count });
+                data.push({ age: Number(age), metric: 'Szorongás', value: vals.anxiety / vals.count });
+                data.push({ age: Number(age), metric: 'Addikció', value: vals.addic / vals.count });
+            });
+            
+            data.sort((a,b) => a.age - b.age);
+            
+            vegaEmbed('#lineAgeChart', {
+                "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                "data": { "values": data },
+                "mark": { 
+                    "type": "line", 
+                    "point": { "size": 80, "filled": true }, // Nagyobb, jól látható pöttyök
+                    "strokeWidth": 3,
+                    "interpolate": "monotone" // <--- Ez a varázslat felel a lágy, organikus görbékért!
+                },
+                "encoding": {
+                    "x": { 
+                        "field": "age", 
+                        "type": "ordinal", 
+                        "title": "Életkor",
+                        // Kijavítottuk a 90 fokos elforgatást vízszintesre:
+                        "axis": { "labelAngle": 0, "labelFontSize": 13, "labelPadding": 5 } 
+                    },
+                    "y": { 
+                        "field": "value", 
+                        "type": "quantitative", 
+                        "title": "Átlagos szint (1-10)", 
+                        "scale": { "domain": [0, 10] } 
+                    },
+                    "color": { 
+                        "field": "metric", 
+                        "type": "nominal", 
+                        "title": null, // Eltüntettük a "Mérőszám" feliratot
+                        "scale": { "domain": ["Stressz", "Szorongás", "Addikció"], "range": ["#8b5cf6", "#06b6d4", "#f59e0b"] },
+                        "legend": { "orient": "bottom", "labelFontSize": 13, "padding": 10 } // Alulra tettük a helytakarékosság miatt
+                    },
+                    "tooltip": [
+                        { "field": "age", "title": "Életkor" }, 
+                        { "field": "metric", "title": "Kategória" }, 
+                        { "field": "value", "title": "Átlag", "format": ".2f" }
+                    ]
+                },
+                "width": "container",
+                "height": 250
+            }, { actions: false });
+        }
+
+        function renderHistogramSocial() {
+            const data = filteredData.map(d => ({ hours: Number(d.daily_social_media_hours) || 0 }));
+            
+            vegaEmbed('#histogramSocial', {
+                "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                "data": { "values": data },
+                "mark": { "type": "bar", "cornerRadiusEnd": 4 },
+                "encoding": {
+                    "x": { 
+                        "field": "hours", 
+                        "type": "quantitative", 
+                        "bin": { "maxbins": 10 }, 
+                        "title": "Óra/nap",
+                        "axis": { "labelFontSize": 12, "titleFontSize": 13 }
+                    },
+                    "y": { 
+                        "aggregate": "count", 
+                        "title": "Fő",
+                        "axis": { "labelFontSize": 12, "titleFontSize": 13 }
+                    },
+                    // Gradiens alkalmazása a sávokon az óraszámok alapján
+                    "color": {
+                        "field": "hours",
+                        "type": "quantitative",
+                        "bin": { "maxbins": 10 },
+                        "scale": { "scheme": "purples" }, // Sötétedő lila paletta
+                        "legend": null
+                    },
+                    "tooltip": [
+                        { "field": "hours", "bin": true, "title": "Óra tartomány" }, 
+                        { "aggregate": "count", "title": "Fő" }
+                    ]
+                },
+                "width": "container",
+                "height": 250
+            }, { actions: false });
+        }
+
+        function renderPlatformChart() {
+            const counts = {};
+            filteredData.forEach(d => {
+                const p = d.platform_usage || 'Unknown';
+                counts[p] = (counts[p] || 0) + 1;
+            });
+            
+            const data = Object.entries(counts).map(([platform, count]) => ({ platform, count }));
+            
+            vegaEmbed('#platformChart', {
+                "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                "data": { "values": data },
+                "mark": "bar",
+                "encoding": {
+                    "x": { "field": "platform", "type": "nominal", "title": "Platform", "axis": { "labelAngle": 0 } },
+                    "y": { "field": "count", "type": "quantitative", "title": "Fő" },
+                    "color": { "value": "#8b5cf6" },
+                    "tooltip": [{ "field": "platform", "title": "Platform" }, { "field": "count", "type": "quantitative", "title": "Fő" }]
+                },
+                "width": "container", // Kitölti a rendelkezésre álló dobozt
+                "height": 250
+            }, { actions: false }); // A fix {width: 300} törölve, hogy a konténer érvényesüljön
+        }
+
+        function renderScatterSocialAnxiety() {
+            const data = filteredData.map(d => ({
+                social: Number(d.daily_social_media_hours) || 0,
+                anxiety: Number(d.anxiety_level) || 0,
+                gender: d.gender
+            })).filter(d => d.social > 0);
+
+            vegaEmbed('#scatterSocialAnxiety', {
+                "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                "data": { "values": data },
+                "mark": { "type": "circle", "opacity": 0.6, "size": 60 },
+                "encoding": {
+                    "x": { "field": "social", "type": "quantitative", "title": "Közösségi média (óra)", "scale": { "domain": [0, 12] } },
+                    "y": { "field": "anxiety", "type": "quantitative", "title": "Szorongás szint", "scale": { "domain": [0, 10] } },
+                    "color": { "field": "gender", "type": "nominal", "title": "Nem", "scale": { "domain": ["male", "female"], "range": ["#8b5cf6", "#ec4899"] } },
+                    "tooltip": [{ "field": "social", "title": "Közösségi média", "format": ".1f" }, { "field": "anxiety", "title": "Szorongás" }, { "field": "gender", "title": "Nem" }]
+                },
+                "width": "container",
+                "height": 250
+            }, { actions: false });
+        }
+
+        function renderHistogramAcademic() {
+            const data = filteredData.map(d => ({ gpa: Number(d.academic_performance) || 0 }));
+
+            vegaEmbed('#histogramAcademic', {
+                "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                "data": { "values": data },
+                "mark": { "type": "bar", "cornerRadiusEnd": 4 },
+                "encoding": {
+                    "x": { "field": "gpa", "type": "quantitative", "bin": { "maxbins": 10 }, "title": "GPA" },
+                    "y": { "aggregate": "count", "title": "Db" },
+                    "color": { "value": "#8b5cf6" },
+                    "tooltip": [{ "field": "gpa", "bin": true, "title": "GPA tartomány" }, { "aggregate": "count", "title": "Db" }]
+                },
+                "width": "container",
+                "height": 250
+            }, { actions: false });
+        }
+
+    </script>
+</body>
+
+</html>
